@@ -231,7 +231,7 @@ export function InvitationExperience() {
               <p className="mt-5 text-xs font-semibold uppercase tracking-[.22em] text-[#8b5a25]">Location</p>
               <p className="mt-2 font-serif text-3xl leading-tight text-[#6f1d31]">{event.venue}</p>
               <p className="mt-3 text-base text-[#6f5a51]">{event.address}</p>
-              <span className="mt-5 min-h-11 rounded-full border border-[#b38a45]/45 px-5 py-2 text-sm font-semibold uppercase tracking-[.12em] text-[#8b5a25] opacity-75">Directions coming soon</span>
+              <a href={event.mapsUrl} target="_blank" rel="noreferrer" className="mt-5 flex min-h-11 items-center rounded-full border border-[#b38a45]/55 px-5 py-2 text-sm font-semibold uppercase tracking-[.12em] text-[#6f1d31] transition-colors hover:bg-[#6f1d31] hover:text-[#fffaf0] focus-visible:outline-2 focus-visible:outline-offset-3">Get directions</a>
             </div>
           </div>
 
