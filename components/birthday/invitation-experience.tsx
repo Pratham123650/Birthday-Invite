@@ -1,24 +1,21 @@
 "use client";
 
 import Image from "next/image";
-import dynamic from "next/dynamic";
 import { motion, useReducedMotion } from "framer-motion";
 import { CalendarDays, ChevronDown, Clock3, MapPin } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import { event } from "@/lib/event";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-const RsvpDialog = dynamic(
-  () => import("@/components/birthday/rsvp-dialog").then((module) => module.RsvpDialog),
-  {
-    ssr: false,
-    loading: () => (
-      <button type="button" disabled className="min-h-14 rounded-full border border-[#d7b56d]/80 bg-[#6f1d31] px-9 text-base font-semibold uppercase tracking-[.16em] text-[#fffaf0] shadow-[0_14px_34px_rgb(71_25_40/22%)]">
-        RSVP <span aria-hidden="true">→</span>
-      </button>
-    ),
-  },
-);
+const RsvpDialog = lazy(() => import("@/components/birthday/rsvp-dialog").then((module) => ({ default: module.RsvpDialog })));
+
+function RsvpPlaceholder() {
+  return (
+    <button type="button" disabled className="min-h-14 rounded-full border border-[#d7b56d]/80 bg-[#6f1d31] px-9 text-base font-semibold uppercase tracking-[.16em] text-[#fffaf0] shadow-[0_14px_34px_rgb(71_25_40/22%)]">
+      RSVP <span aria-hidden="true">→</span>
+    </button>
+  );
+}
 
 type ScenePhase =
   | "intro"
@@ -157,6 +154,7 @@ function RevealSection({ children, className = "", sectionRef, id, guidedReveal 
 export function InvitationExperience() {
   const [showIntro, setShowIntro] = useState(true);
   const [phase, setPhase] = useState<ScenePhase>("intro");
+  const [rsvpReady, setRsvpReady] = useState(false);
   const sequenceAbortRef = useRef<AbortController | null>(null);
   const messageRef = useRef<HTMLElement>(null);
   const detailsRef = useRef<HTMLElement>(null);
@@ -243,6 +241,21 @@ export function InvitationExperience() {
       window.history.scrollRestoration = previousRestoration;
     };
   }, [cancelJourney]);
+
+  useEffect(() => {
+    const section = rsvpRef.current;
+    if (!section || !("IntersectionObserver" in window)) {
+      setRsvpReady(true);
+      return;
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      setRsvpReady(true);
+      observer.disconnect();
+    }, { rootMargin: "600px 0px" });
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
 
   const guided = guidedPhases.has(phase);
   const messageRevealed = ["message", "scrolling-details", "details", "scrolling-rsvp", "rsvp"].includes(phase);
@@ -344,7 +357,11 @@ export function InvitationExperience() {
           <p className="text-sm font-semibold uppercase tracking-[.28em] text-[#8b5a25]">Join us in celebrating</p>
           <h2 className="mt-5 text-balance font-serif text-[clamp(3rem,9vw,6.7rem)] leading-[.95] tracking-[-.04em] text-[#6f1d31]">Will you be joining us?</h2>
           <p className="mx-auto mt-7 max-w-xl text-lg leading-relaxed text-[#6f5a51]">We would be honored to celebrate this special day with you.</p>
-          <div className="mt-9"><RsvpDialog pulse={phase === "rsvp"} /></div>
+          <div className="mt-9">
+            <Suspense fallback={<RsvpPlaceholder />}>
+              {rsvpReady ? <RsvpDialog pulse={phase === "rsvp"} /> : <RsvpPlaceholder />}
+            </Suspense>
+          </div>
           <div className="mx-auto mt-9 flex max-w-lg flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm font-semibold uppercase tracking-[.12em] text-[#6f5a51]">
             <span>{event.shortDate}</span><span aria-hidden="true" className="text-[#b38a45]">◆</span><span>{event.time}</span><span aria-hidden="true" className="text-[#b38a45]">◆</span><span>{event.address}</span>
           </div>
