@@ -1,0 +1,273 @@
+"use client";
+
+import Image from "next/image";
+import { motion, useReducedMotion } from "framer-motion";
+import { CalendarDays, ChevronDown, Clock3, MapPin } from "lucide-react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
+import { RsvpDialog } from "@/components/birthday/rsvp-dialog";
+import { event } from "@/lib/event";
+
+const JOURNEY_KEY = "sureshchandra-75-journey-seen";
+const confetti = [
+  ["-52px", "-38px", "45deg", "#6f1d31"], ["-31px", "-56px", "-35deg", "#b38a45"],
+  ["0px", "-64px", "80deg", "#2f5d50"], ["34px", "-52px", "120deg", "#6f1d31"],
+  ["54px", "-30px", "170deg", "#b38a45"], ["-60px", "-6px", "210deg", "#2f5d50"],
+  ["62px", "2px", "260deg", "#6f1d31"], ["-38px", "18px", "310deg", "#b38a45"],
+];
+
+function Toran() {
+  return (
+    <div className="absolute inset-x-4 top-4 flex items-start justify-center text-[#8b5a25] sm:inset-x-8" aria-hidden="true">
+      <div className="h-px w-[min(34vw,15rem)] bg-current/45" />
+      <div className="-mt-1.5 mx-3 h-3 w-3 rotate-45 border border-current" />
+      <div className="-mt-px flex gap-3">
+        {[0, 1, 2].map((item) => <span key={item} className="block h-3 w-3 rotate-45 border-b border-r border-current/60" />)}
+      </div>
+      <div className="-mt-1.5 mx-3 h-3 w-3 rotate-45 border border-current" />
+      <div className="h-px w-[min(34vw,15rem)] bg-current/45" />
+    </div>
+  );
+}
+
+function Intro({ onSkip }: { onSkip: () => void }) {
+  return (
+    <div className="intro-screen fixed inset-0 z-[100] grid place-items-center bg-[#f8f1e5]" role="status" aria-label="Opening the birthday invitation">
+      <button onClick={onSkip} className="absolute right-4 top-4 min-h-11 px-4 text-sm font-semibold uppercase tracking-[.16em] text-[#6f1d31] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4">Skip</button>
+      <div className="intro-cake relative flex h-44 w-44 items-end justify-center" aria-hidden="true">
+        <div className="absolute bottom-7 h-16 w-28 rounded-t-[2rem] border border-[#b38a45] bg-[#fffaf0] shadow-[0_12px_35px_rgb(68_31_28/12%)]">
+          <div className="absolute left-0 right-0 top-4 h-px bg-[#b38a45]/50" />
+          <div className="absolute left-0 right-0 top-8 text-center font-serif text-lg text-[#6f1d31]">75</div>
+        </div>
+        <div className="absolute bottom-[5.65rem] h-10 w-1.5 rounded-full bg-[#6f1d31]" />
+        <div className="intro-flame absolute bottom-[8.1rem] h-6 w-4 origin-bottom rounded-[60%_40%_55%_45%] bg-[#c99a3d] shadow-[0_0_16px_rgb(201_154_61/55%)]" />
+        <div className="intro-smoke absolute bottom-[8.2rem] h-7 w-4 rounded-full border-l border-[#6f5a51]" />
+        <div className="intro-confetti absolute left-1/2 top-1/2">
+          {confetti.map(([x, y, r, color], index) => (
+            <span key={index} className="absolute h-2 w-1" style={{ "--x": x, "--y": y, "--r": r, backgroundColor: color } as CSSProperties} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RevealSection({ children, className = "", sectionRef, id }: { children: ReactNode; className?: string; sectionRef?: RefObject<HTMLElement | null>; id?: string }) {
+  const reduceMotion = useReducedMotion();
+  return (
+    <motion.section
+      id={id}
+      ref={sectionRef}
+      initial={reduceMotion ? false : { opacity: 0, y: 36 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: .18 }}
+      transition={{ duration: .75, ease: [.22, .8, .25, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.section>
+  );
+}
+
+export function InvitationExperience() {
+  const reduceMotion = useReducedMotion();
+  const [showIntro, setShowIntro] = useState(false);
+  const [cinemaActive, setCinemaActive] = useState(false);
+  const messageRef = useRef<HTMLElement>(null);
+  const detailsRef = useRef<HTMLElement>(null);
+  const rsvpRef = useRef<HTMLElement>(null);
+  const rsvpButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (reduceMotion || window.localStorage.getItem(JOURNEY_KEY)) return;
+    setShowIntro(true);
+    const timer = window.setTimeout(() => {
+      setShowIntro(false);
+      setCinemaActive(true);
+    }, 1500);
+    return () => window.clearTimeout(timer);
+  }, [reduceMotion]);
+
+  useEffect(() => {
+    if (!cinemaActive || reduceMotion) return;
+    let frame = 0;
+    let startTimer = 0;
+    let stopped = false;
+
+    const finish = () => {
+      if (stopped) return;
+      stopped = true;
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(startTimer);
+      window.localStorage.setItem(JOURNEY_KEY, "true");
+      setCinemaActive(false);
+    };
+    const cancelOnKey = (event: KeyboardEvent) => {
+      if (["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " "].includes(event.key)) finish();
+    };
+    const options = { passive: true } as const;
+    window.addEventListener("wheel", finish, options);
+    window.addEventListener("touchstart", finish, options);
+    window.addEventListener("pointerdown", finish, options);
+    window.addEventListener("keydown", cancelOnKey);
+
+    startTimer = window.setTimeout(() => {
+      const viewport = window.innerHeight;
+      const centerOf = (element: HTMLElement | null) => {
+        if (!element) return window.scrollY;
+        const rect = element.getBoundingClientRect();
+        return Math.max(0, window.scrollY + rect.top + rect.height / 2 - viewport / 2);
+      };
+      const points = [
+        window.scrollY,
+        centerOf(messageRef.current),
+        centerOf(detailsRef.current),
+        centerOf(rsvpButtonRef.current ?? rsvpRef.current),
+      ];
+      const started = performance.now();
+      const duration = 5200;
+      const ease = (value: number) => value < .5 ? 4 * value * value * value : 1 - Math.pow(-2 * value + 2, 3) / 2;
+
+      const step = (now: number) => {
+        if (stopped) return;
+        const progress = Math.min((now - started) / duration, 1);
+        const scaled = progress * (points.length - 1);
+        const segment = Math.min(Math.floor(scaled), points.length - 2);
+        const local = ease(scaled - segment);
+        const top = points[segment] + (points[segment + 1] - points[segment]) * local;
+        window.scrollTo(0, top);
+        if (progress < 1) frame = window.requestAnimationFrame(step);
+        else finish();
+      };
+      frame = window.requestAnimationFrame(step);
+    }, 160);
+
+    return () => {
+      stopped = true;
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(startTimer);
+      window.removeEventListener("wheel", finish);
+      window.removeEventListener("touchstart", finish);
+      window.removeEventListener("pointerdown", finish);
+      window.removeEventListener("keydown", cancelOnKey);
+    };
+  }, [cinemaActive, reduceMotion]);
+
+  const skipJourney = () => {
+    window.localStorage.setItem(JOURNEY_KEY, "true");
+    setShowIntro(false);
+    setCinemaActive(false);
+  };
+
+  return (
+    <main className="paper-texture min-h-screen overflow-x-hidden">
+      {showIntro && <Intro onSkip={skipJourney} />}
+      {cinemaActive && (
+        <button onClick={skipJourney} className="fixed right-4 top-4 z-50 min-h-11 rounded-full border border-[#b38a45]/60 bg-[#fffaf0]/90 px-5 text-sm font-semibold uppercase tracking-[.14em] text-[#6f1d31] shadow-md backdrop-blur-md hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-3">
+          Skip intro
+        </button>
+      )}
+
+      <section className="relative grid min-h-[100svh] place-items-center px-5 py-16 sm:px-8" aria-labelledby="hero-title">
+        <Toran />
+        <div className="hero-reveal mx-auto grid w-full max-w-6xl items-center gap-10 pt-8 lg:grid-cols-[1.02fr_.98fr] lg:gap-16">
+          <div className="text-center lg:text-left">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[.28em] text-[#8b5a25]">A milestone to remember</p>
+            <div className="relative mx-auto h-[7.6rem] w-[min(100%,18rem)] font-serif text-[7.5rem] leading-none tracking-[-.08em] text-[#6f1d31] sm:h-[10rem] sm:text-[9.8rem] lg:mx-0" aria-label="Seventy-five">
+              <span className="numeral-western absolute inset-0">{event.westernNumeral}</span>
+              <span className="numeral-gujarati absolute inset-0" lang="gu">{event.gujaratiNumeral}</span>
+            </div>
+            <p className="mb-5 font-serif text-2xl text-[#8b5a25] sm:text-3xl" lang="gu">{event.gujaratiMilestone}</p>
+            <h1 id="hero-title" className="text-balance font-serif text-[clamp(2.35rem,7vw,5.2rem)] leading-[.96] tracking-[-.04em] text-[#351b1e]">
+              Celebrating <span className="italic text-[#6f1d31]">{event.honoree}</span>
+            </h1>
+            <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-[#6f5a51] lg:mx-0">Join our family in honoring seventy-five wonderful years of love, wisdom, and cherished memories.</p>
+            <div className="mt-8 inline-flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-y border-[#b38a45]/45 py-3 text-[.95rem] font-semibold uppercase tracking-[.1em] text-[#6f1d31] lg:justify-start">
+              <time dateTime={event.dateISO}>{event.date}</time><span aria-hidden="true" className="text-[#b38a45]">◆</span><span>{event.time}</span>
+            </div>
+            <a href="#invitation" className="mx-auto mt-9 flex w-fit min-h-11 items-center gap-2 text-sm font-semibold uppercase tracking-[.18em] text-[#6f1d31] underline-offset-8 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 lg:mx-0">
+              Open the invitation <ChevronDown className="size-4" aria-hidden="true" />
+            </a>
+          </div>
+
+          <figure className="mx-auto w-full max-w-[25rem] lg:max-w-none">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-t-[9rem] border border-[#b38a45]/65 bg-[#e8dbc5] p-2 shadow-[0_24px_70px_rgb(68_31_28/18%)] sm:rounded-t-[13rem]">
+              <div className="relative h-full w-full overflow-hidden rounded-t-[8.4rem] sm:rounded-t-[12.4rem]">
+                <Image src="/sureshchandra.jpeg" alt="Sureshchandra, whose 75th birthday we are celebrating" fill priority sizes="(max-width: 1024px) 90vw, 45vw" className="scale-[1.18] object-cover object-[50%_54%]" />
+                <div className="absolute inset-0 bg-[#6f1d31]/[.02]" />
+              </div>
+            </div>
+            <figcaption className="mt-4 text-center text-xs font-semibold uppercase tracking-[.24em] text-[#8b5a25]">20 · 09 · 2026</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <RevealSection id="invitation" sectionRef={messageRef} className="relative grid min-h-[82svh] place-items-center overflow-hidden bg-[#6f1d31] px-6 py-24 text-[#fffaf0]">
+        <div className="absolute inset-y-0 left-1/2 w-px bg-[#d7b56d]/20" aria-hidden="true" />
+        <div className="absolute left-1/2 top-0 h-24 w-px bg-[#d7b56d]/80" aria-hidden="true" />
+        <div className="relative z-10 mx-auto max-w-4xl text-center">
+          <p className="text-sm font-semibold uppercase tracking-[.26em] text-[#d7b56d]">A life beautifully lived</p>
+          <h2 className="mt-7 text-balance font-serif text-[clamp(2.5rem,8vw,6rem)] leading-[1.02] tracking-[-.035em]">75 years. Countless memories. One remarkable journey.</h2>
+          <p className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-[#f1e5d5]">With grateful hearts, we invite you to celebrate the stories, values, and enduring warmth Sureshchandra has shared with us all.</p>
+          <div className="mx-auto mt-12 h-10 w-10 rotate-45 border border-[#d7b56d]/70" aria-hidden="true"><div className="m-[7px] h-6 w-6 border border-[#d7b56d]/40" /></div>
+        </div>
+      </RevealSection>
+
+      <RevealSection sectionRef={detailsRef} className="relative px-5 py-24 sm:px-8 lg:py-32">
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-sm font-semibold uppercase tracking-[.25em] text-[#8b5a25]">Save the date</p>
+            <h2 className="mt-4 font-serif text-[clamp(2.6rem,7vw,5rem)] leading-none tracking-[-.035em] text-[#351b1e]">Come celebrate with us</h2>
+          </div>
+
+          <div className="mt-14 grid overflow-hidden border border-[#b38a45]/45 bg-[#fffaf0]/65 shadow-[0_22px_70px_rgb(68_31_28/8%)] md:grid-cols-2">
+            <div className="flex min-h-60 flex-col items-center justify-center border-b border-[#b38a45]/35 p-8 text-center md:border-b-0 md:border-r">
+              <CalendarDays className="size-7 text-[#8b5a25]" strokeWidth={1.5} aria-hidden="true" />
+              <p className="mt-5 text-xs font-semibold uppercase tracking-[.22em] text-[#8b5a25]">Date</p>
+              <time dateTime={event.dateISO} className="mt-2 font-serif text-3xl leading-tight text-[#6f1d31]">{event.date}</time>
+              <div className="mt-5 flex items-center gap-2 text-lg text-[#351b1e]"><Clock3 className="size-5 text-[#8b5a25]" strokeWidth={1.5} aria-hidden="true" />{event.time}</div>
+            </div>
+            <div className="flex min-h-60 flex-col items-center justify-center p-8 text-center">
+              <MapPin className="size-7 text-[#8b5a25]" strokeWidth={1.5} aria-hidden="true" />
+              <p className="mt-5 text-xs font-semibold uppercase tracking-[.22em] text-[#8b5a25]">Location</p>
+              <p className="mt-2 font-serif text-3xl leading-tight text-[#6f1d31]">{event.venue}</p>
+              <p className="mt-3 text-base text-[#6f5a51]">{event.address}</p>
+              <span className="mt-5 min-h-11 rounded-full border border-[#b38a45]/45 px-5 py-2 text-sm font-semibold uppercase tracking-[.12em] text-[#8b5a25] opacity-75">Directions coming soon</span>
+            </div>
+          </div>
+
+          <details className="group mx-auto mt-8 max-w-3xl border-y border-[#b38a45]/40 py-1">
+            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-2 text-base font-semibold text-[#6f1d31] focus-visible:outline-2 focus-visible:outline-offset-2">More celebration details <ChevronDown className="size-5 transition-transform group-open:rotate-180" aria-hidden="true" /></summary>
+            <div className="grid gap-6 border-t border-[#b38a45]/25 px-2 py-7 sm:grid-cols-3">
+              <div><p className="text-xs font-semibold uppercase tracking-[.16em] text-[#8b5a25]">Dress</p><p className="mt-1 text-[#6f5a51]">{event.dressCode}</p></div>
+              <div><p className="text-xs font-semibold uppercase tracking-[.16em] text-[#8b5a25]">Parking</p><p className="mt-1 text-[#6f5a51]">{event.parking}</p></div>
+              <div><p className="text-xs font-semibold uppercase tracking-[.16em] text-[#8b5a25]">Questions</p><p className="mt-1 text-[#6f5a51]">{event.contact}</p></div>
+            </div>
+          </details>
+        </div>
+      </RevealSection>
+
+      <RevealSection id="rsvp" sectionRef={rsvpRef} className="relative grid min-h-[100svh] place-items-center overflow-hidden bg-[#efe3d0] px-5 py-24 text-center sm:px-8">
+        <div className="absolute inset-7 border border-[#b38a45]/35 sm:inset-10" aria-hidden="true" />
+        <div className="absolute inset-10 border border-[#b38a45]/15 sm:inset-14" aria-hidden="true" />
+        <div className="relative z-10 mx-auto max-w-3xl">
+          <p className="text-sm font-semibold uppercase tracking-[.28em] text-[#8b5a25]">Join us in celebrating</p>
+          <h2 className="mt-5 text-balance font-serif text-[clamp(3rem,9vw,6.7rem)] leading-[.95] tracking-[-.04em] text-[#6f1d31]">Will you be joining us?</h2>
+          <p className="mx-auto mt-7 max-w-xl text-lg leading-relaxed text-[#6f5a51]">We would be honored to celebrate this special day with you.</p>
+          <div className="mt-9"><RsvpDialog buttonRef={rsvpButtonRef} /></div>
+          <div className="mx-auto mt-9 flex max-w-lg flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm font-semibold uppercase tracking-[.12em] text-[#6f5a51]">
+            <span>{event.shortDate}</span><span aria-hidden="true" className="text-[#b38a45]">◆</span><span>{event.time}</span><span aria-hidden="true" className="text-[#b38a45]">◆</span><span>{event.address}</span>
+          </div>
+        </div>
+      </RevealSection>
+
+      <footer className="bg-[#351b1e] px-6 py-20 text-center text-[#fffaf0]">
+        <div className="mx-auto max-w-3xl">
+          <p className="font-serif text-3xl italic leading-snug text-[#f6ead8] sm:text-4xl">“{event.familyMessage}”</p>
+          <div className="mx-auto my-9 h-px w-24 bg-[#d7b56d]/70" aria-hidden="true" />
+          <p className="text-sm font-semibold uppercase tracking-[.24em] text-[#d7b56d]">With love, the family</p>
+          <p className="mt-5 text-sm text-[#f1e5d5]/70">Celebrating {event.honoree} · {event.westernNumeral}</p>
+        </div>
+      </footer>
+    </main>
+  );
+}
