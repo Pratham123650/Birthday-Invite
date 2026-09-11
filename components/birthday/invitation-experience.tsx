@@ -1,14 +1,95 @@
 "use client";
 
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { motion, useReducedMotion } from "framer-motion";
 import { CalendarDays, ChevronDown, Clock3, MapPin } from "lucide-react";
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
-import { RsvpDialog } from "@/components/birthday/rsvp-dialog";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import { event } from "@/lib/event";
 
-const JOURNEY_KEY = "sureshchandra-75-journey-seen";
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+const RsvpDialog = dynamic(
+  () => import("@/components/birthday/rsvp-dialog").then((module) => module.RsvpDialog),
+  {
+    ssr: false,
+    loading: () => (
+      <button type="button" disabled className="min-h-14 rounded-full border border-[#d7b56d]/80 bg-[#6f1d31] px-9 text-base font-semibold uppercase tracking-[.16em] text-[#fffaf0] shadow-[0_14px_34px_rgb(71_25_40/22%)]">
+        RSVP <span aria-hidden="true">→</span>
+      </button>
+    ),
+  },
+);
+
+type ScenePhase =
+  | "intro"
+  | "hero"
+  | "scrolling-message"
+  | "message"
+  | "scrolling-details"
+  | "details"
+  | "scrolling-rsvp"
+  | "rsvp"
+  | "done"
+  | "cancelled";
+
+const guidedPhases = new Set<ScenePhase>([
+  "intro", "hero", "scrolling-message", "message", "scrolling-details", "details", "scrolling-rsvp", "rsvp",
+]);
+
+function waitFor(ms: number, signal: AbortSignal) {
+  return new Promise<void>((resolve) => {
+    if (signal.aborted) return resolve();
+    const timer = window.setTimeout(resolve, ms);
+    signal.addEventListener("abort", () => {
+      window.clearTimeout(timer);
+      resolve();
+    }, { once: true });
+  });
+}
+
+function sceneEase(progress: number) {
+  let t = progress;
+  for (let iteration = 0; iteration < 5; iteration += 1) {
+    const inverse = 1 - t;
+    const x = 3 * inverse * inverse * t * .65 + 3 * inverse * t * t * .35 + t * t * t;
+    const derivative = 3 * inverse * inverse * .65 + 6 * inverse * t * (.35 - .65) + 3 * t * t * (1 - .35);
+    if (Math.abs(derivative) < .0001) break;
+    t = Math.min(1, Math.max(0, t - (x - progress) / derivative));
+  }
+  const inverse = 1 - t;
+  return 3 * inverse * t * t + t * t * t;
+}
+
+function scrollToScene(element: HTMLElement, signal: AbortSignal, duration = 820) {
+  return new Promise<void>((resolve) => {
+    if (signal.aborted) return resolve();
+    const start = window.scrollY;
+    const rect = element.getBoundingClientRect();
+    const unclampedTarget = start + rect.top + rect.height / 2 - window.innerHeight / 2;
+    const target = Math.max(0, Math.min(unclampedTarget, document.documentElement.scrollHeight - window.innerHeight));
+    if (Math.abs(target - start) < 2) return resolve();
+
+    const startedAt = performance.now();
+    let frame = 0;
+    const cancel = () => {
+      window.cancelAnimationFrame(frame);
+      resolve();
+    };
+    signal.addEventListener("abort", cancel, { once: true });
+
+    const step = (now: number) => {
+      if (signal.aborted) return;
+      const progress = Math.min((now - startedAt) / duration, 1);
+      window.scrollTo(0, start + (target - start) * sceneEase(progress));
+      if (progress < 1) frame = window.requestAnimationFrame(step);
+      else {
+        signal.removeEventListener("abort", cancel);
+        resolve();
+      }
+    };
+    frame = window.requestAnimationFrame(step);
+  });
+}
 const confetti = [
   ["-52px", "-38px", "45deg", "#6f1d31"], ["-31px", "-56px", "-35deg", "#b38a45"],
   ["0px", "-64px", "80deg", "#2f5d50"], ["34px", "-52px", "120deg", "#6f1d31"],
@@ -52,14 +133,18 @@ function Intro({ onSkip }: { onSkip: () => void }) {
   );
 }
 
-function RevealSection({ children, className = "", sectionRef, id }: { children: ReactNode; className?: string; sectionRef?: RefObject<HTMLElement | null>; id?: string }) {
+function RevealSection({ children, className = "", sectionRef, id, guidedReveal }: { children: ReactNode; className?: string; sectionRef?: RefObject<HTMLElement | null>; id?: string; guidedReveal?: boolean }) {
   const reduceMotion = useReducedMotion();
+  const controlled = typeof guidedReveal === "boolean";
+  const hidden = reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 36 };
+  const visible = { opacity: 1, y: 0 };
   return (
     <motion.section
       id={id}
       ref={sectionRef}
-      initial={reduceMotion ? false : { opacity: 0, y: 36 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={reduceMotion ? false : hidden}
+      animate={controlled ? (guidedReveal ? visible : hidden) : undefined}
+      whileInView={controlled ? undefined : visible}
       viewport={{ once: true, amount: .18 }}
       transition={{ duration: .75, ease: [.22, .8, .25, 1] }}
       className={className}
@@ -70,107 +155,112 @@ function RevealSection({ children, className = "", sectionRef, id }: { children:
 }
 
 export function InvitationExperience() {
-  const reduceMotion = useReducedMotion();
-  const [showIntro, setShowIntro] = useState(false);
-  const [cinemaActive, setCinemaActive] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
+  const [phase, setPhase] = useState<ScenePhase>("intro");
+  const sequenceAbortRef = useRef<AbortController | null>(null);
   const messageRef = useRef<HTMLElement>(null);
   const detailsRef = useRef<HTMLElement>(null);
   const rsvpRef = useRef<HTMLElement>(null);
-  const rsvpButtonRef = useRef<HTMLButtonElement>(null);
+  const messageContentRef = useRef<HTMLDivElement>(null);
+  const detailsContentRef = useRef<HTMLDivElement>(null);
+  const rsvpContentRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (reduceMotion || window.localStorage.getItem(JOURNEY_KEY)) return;
-    setShowIntro(true);
-    const timer = window.setTimeout(() => {
-      setShowIntro(false);
-      setCinemaActive(true);
-    }, 1500);
-    return () => window.clearTimeout(timer);
-  }, [reduceMotion]);
-
-  useEffect(() => {
-    if (!cinemaActive || reduceMotion) return;
-    let frame = 0;
-    let startTimer = 0;
-    let stopped = false;
-
-    const finish = () => {
-      if (stopped) return;
-      stopped = true;
-      window.cancelAnimationFrame(frame);
-      window.clearTimeout(startTimer);
-      window.localStorage.setItem(JOURNEY_KEY, "true");
-      setCinemaActive(false);
-    };
-    const cancelOnKey = (event: KeyboardEvent) => {
-      if (["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " "].includes(event.key)) finish();
-    };
-    const options = { passive: true } as const;
-    window.addEventListener("wheel", finish, options);
-    window.addEventListener("touchstart", finish, options);
-    window.addEventListener("pointerdown", finish, options);
-    window.addEventListener("keydown", cancelOnKey);
-
-    startTimer = window.setTimeout(() => {
-      const viewport = window.innerHeight;
-      const centerOf = (element: HTMLElement | null) => {
-        if (!element) return window.scrollY;
-        const rect = element.getBoundingClientRect();
-        return Math.max(0, window.scrollY + rect.top + rect.height / 2 - viewport / 2);
-      };
-      const points = [
-        window.scrollY,
-        centerOf(messageRef.current),
-        centerOf(detailsRef.current),
-        centerOf(rsvpButtonRef.current ?? rsvpRef.current),
-      ];
-      const started = performance.now();
-      const duration = 5200;
-      const ease = (value: number) => value < .5 ? 4 * value * value * value : 1 - Math.pow(-2 * value + 2, 3) / 2;
-
-      const step = (now: number) => {
-        if (stopped) return;
-        const progress = Math.min((now - started) / duration, 1);
-        const scaled = progress * (points.length - 1);
-        const segment = Math.min(Math.floor(scaled), points.length - 2);
-        const local = ease(scaled - segment);
-        const top = points[segment] + (points[segment + 1] - points[segment]) * local;
-        window.scrollTo(0, top);
-        if (progress < 1) frame = window.requestAnimationFrame(step);
-        else finish();
-      };
-      frame = window.requestAnimationFrame(step);
-    }, 160);
-
-    return () => {
-      stopped = true;
-      window.cancelAnimationFrame(frame);
-      window.clearTimeout(startTimer);
-      window.removeEventListener("wheel", finish);
-      window.removeEventListener("touchstart", finish);
-      window.removeEventListener("pointerdown", finish);
-      window.removeEventListener("keydown", cancelOnKey);
-    };
-  }, [cinemaActive, reduceMotion]);
-
-  const skipJourney = () => {
-    window.localStorage.setItem(JOURNEY_KEY, "true");
+  const cancelJourney = useCallback(() => {
+    sequenceAbortRef.current?.abort();
     setShowIntro(false);
-    setCinemaActive(false);
-  };
+    setPhase("cancelled");
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    sequenceAbortRef.current = controller;
+    const { signal } = controller;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const previousRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+    window.scrollTo(0, 0);
+
+    const interrupt = () => cancelJourney();
+    const interruptOnKey = (event: KeyboardEvent) => {
+      if (["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " "].includes(event.key)) interrupt();
+    };
+    const options = { passive: true, signal } as AddEventListenerOptions;
+    window.addEventListener("wheel", interrupt, options);
+    window.addEventListener("touchstart", interrupt, options);
+    window.addEventListener("pointerdown", interrupt, options);
+    window.addEventListener("click", interrupt, options);
+    window.addEventListener("keydown", interruptOnKey, { signal });
+
+    const run = async () => {
+      if (reduceMotion) {
+        await waitFor(240, signal);
+        if (signal.aborted) return;
+        setShowIntro(false);
+        setPhase("done");
+        controller.abort();
+        return;
+      }
+
+      await waitFor(1180, signal);
+      if (signal.aborted) return;
+      setPhase("hero");
+      await waitFor(300, signal);
+      if (signal.aborted) return;
+      setShowIntro(false);
+      await waitFor(2100, signal);
+      if (signal.aborted || !messageContentRef.current) return;
+
+      setPhase("scrolling-message");
+      await scrollToScene(messageContentRef.current, signal);
+      await waitFor(130, signal);
+      if (signal.aborted) return;
+      setPhase("message");
+      await waitFor(2250, signal);
+      if (signal.aborted || !detailsContentRef.current) return;
+
+      setPhase("scrolling-details");
+      await scrollToScene(detailsContentRef.current, signal);
+      await waitFor(130, signal);
+      if (signal.aborted) return;
+      setPhase("details");
+      await waitFor(2500, signal);
+      if (signal.aborted || !rsvpContentRef.current) return;
+
+      setPhase("scrolling-rsvp");
+      await scrollToScene(rsvpContentRef.current, signal, 860);
+      await waitFor(130, signal);
+      if (signal.aborted) return;
+      setPhase("rsvp");
+      await waitFor(900, signal);
+      if (signal.aborted) return;
+      setPhase("done");
+      controller.abort();
+    };
+
+    void run();
+    return () => {
+      controller.abort();
+      window.history.scrollRestoration = previousRestoration;
+    };
+  }, [cancelJourney]);
+
+  const guided = guidedPhases.has(phase);
+  const messageRevealed = ["message", "scrolling-details", "details", "scrolling-rsvp", "rsvp"].includes(phase);
+  const detailsRevealed = ["details", "scrolling-rsvp", "rsvp"].includes(phase);
+  const rsvpRevealed = phase === "rsvp";
 
   return (
-    <main className="paper-texture min-h-screen overflow-x-hidden">
-      {showIntro && <Intro onSkip={skipJourney} />}
-      {cinemaActive && (
-        <button onClick={skipJourney} className="fixed right-4 top-4 z-50 min-h-11 rounded-full border border-[#b38a45]/60 bg-[#fffaf0]/90 px-5 text-sm font-semibold uppercase tracking-[.14em] text-[#6f1d31] shadow-md backdrop-blur-md hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-3">
-          Skip intro
+    <main className="paper-texture min-h-screen overflow-x-hidden" data-guided-phase={phase}>
+      {showIntro && <Intro onSkip={cancelJourney} />}
+      {guided && !showIntro && (
+        <button onClick={cancelJourney} className="fixed right-4 top-4 z-50 min-h-11 rounded-full border border-[#b38a45]/45 bg-[#fffaf0]/85 px-4 text-xs font-semibold uppercase tracking-[.14em] text-[#6f1d31] shadow-sm backdrop-blur-md hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-3">
+          Skip
         </button>
       )}
 
       <section className="relative grid min-h-[100svh] place-items-center px-5 py-16 sm:px-8" aria-labelledby="hero-title">
         <Toran />
-        <div className="hero-reveal mx-auto grid w-full max-w-6xl items-center gap-10 pt-8 lg:grid-cols-[1.02fr_.98fr] lg:gap-16">
+        <div className={`${phase === "intro" ? "" : "hero-reveal"} mx-auto grid w-full max-w-6xl items-center gap-10 pt-8 lg:grid-cols-[1.02fr_.98fr] lg:gap-16`}>
           <div className="text-center lg:text-left">
             <p className="mb-3 text-sm font-semibold uppercase tracking-[.28em] text-[#8b5a25]">A milestone to remember</p>
             <div className="relative mx-auto h-[7.6rem] w-[min(100%,18rem)] font-serif text-[7.5rem] leading-none tracking-[-.08em] text-[#6f1d31] sm:h-[10rem] sm:text-[9.8rem] lg:mx-0" aria-label="Seventy-five">
@@ -202,10 +292,10 @@ export function InvitationExperience() {
         </div>
       </section>
 
-      <RevealSection id="invitation" sectionRef={messageRef} className="relative grid min-h-[82svh] place-items-center overflow-hidden bg-[#6f1d31] px-6 py-24 text-[#fffaf0]">
+      <RevealSection id="invitation" sectionRef={messageRef} guidedReveal={guided ? messageRevealed : undefined} className="relative grid min-h-[82svh] place-items-center overflow-hidden bg-[#6f1d31] px-6 py-24 text-[#fffaf0]">
         <div className="absolute inset-y-0 left-1/2 w-px bg-[#d7b56d]/20" aria-hidden="true" />
         <div className="absolute left-1/2 top-0 h-24 w-px bg-[#d7b56d]/80" aria-hidden="true" />
-        <div className="relative z-10 mx-auto max-w-4xl text-center">
+        <div ref={messageContentRef} className="relative z-10 mx-auto max-w-4xl text-center">
           <p className="text-sm font-semibold uppercase tracking-[.26em] text-[#d7b56d]">A life beautifully lived</p>
           <h2 className="mt-7 text-balance font-serif text-[clamp(2.5rem,8vw,6rem)] leading-[1.02] tracking-[-.035em]">75 years. Countless memories. One remarkable journey.</h2>
           <p className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-[#f1e5d5]">With grateful hearts, we invite you to celebrate the stories, values, and enduring warmth Sureshchandra has shared with us all.</p>
@@ -213,8 +303,8 @@ export function InvitationExperience() {
         </div>
       </RevealSection>
 
-      <RevealSection sectionRef={detailsRef} className="relative px-5 py-24 sm:px-8 lg:py-32">
-        <div className="mx-auto max-w-6xl">
+      <RevealSection sectionRef={detailsRef} guidedReveal={guided ? detailsRevealed : undefined} className="relative px-5 py-24 sm:px-8 lg:py-32">
+        <div ref={detailsContentRef} className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-semibold uppercase tracking-[.25em] text-[#8b5a25]">Save the date</p>
             <h2 className="mt-4 font-serif text-[clamp(2.6rem,7vw,5rem)] leading-none tracking-[-.035em] text-[#351b1e]">Come celebrate with us</h2>
@@ -247,14 +337,14 @@ export function InvitationExperience() {
         </div>
       </RevealSection>
 
-      <RevealSection id="rsvp" sectionRef={rsvpRef} className="relative grid min-h-[100svh] place-items-center overflow-hidden bg-[#efe3d0] px-5 py-24 text-center sm:px-8">
+      <RevealSection id="rsvp" sectionRef={rsvpRef} guidedReveal={guided ? rsvpRevealed : undefined} className="relative grid min-h-[100svh] place-items-center overflow-hidden bg-[#efe3d0] px-5 py-24 text-center sm:px-8">
         <div className="absolute inset-7 border border-[#b38a45]/35 sm:inset-10" aria-hidden="true" />
         <div className="absolute inset-10 border border-[#b38a45]/15 sm:inset-14" aria-hidden="true" />
-        <div className="relative z-10 mx-auto max-w-3xl">
+        <div ref={rsvpContentRef} className="relative z-10 mx-auto max-w-3xl">
           <p className="text-sm font-semibold uppercase tracking-[.28em] text-[#8b5a25]">Join us in celebrating</p>
           <h2 className="mt-5 text-balance font-serif text-[clamp(3rem,9vw,6.7rem)] leading-[.95] tracking-[-.04em] text-[#6f1d31]">Will you be joining us?</h2>
           <p className="mx-auto mt-7 max-w-xl text-lg leading-relaxed text-[#6f5a51]">We would be honored to celebrate this special day with you.</p>
-          <div className="mt-9"><RsvpDialog buttonRef={rsvpButtonRef} /></div>
+          <div className="mt-9"><RsvpDialog pulse={phase === "rsvp"} /></div>
           <div className="mx-auto mt-9 flex max-w-lg flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm font-semibold uppercase tracking-[.12em] text-[#6f5a51]">
             <span>{event.shortDate}</span><span aria-hidden="true" className="text-[#b38a45]">◆</span><span>{event.time}</span><span aria-hidden="true" className="text-[#b38a45]">◆</span><span>{event.address}</span>
           </div>

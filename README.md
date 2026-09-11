@@ -24,3 +24,5 @@ The workflow in `.github/workflows/pages.yml` builds a static export at `/Birthd
 ## Local development
 
 Run `npm install`, then `npm run dev`. The private guest-list dashboard is at `/admin`.
+
+The cake and guided introduction replay on every full page load. Append `?intro=1` while developing or testing to make the replay intent explicit without clearing browser storage.

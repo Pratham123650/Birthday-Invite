@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, LoaderCircle } from "lucide-react";
-import { useState, type FormEvent, type Ref } from "react";
+import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -68,7 +68,7 @@ async function sendRsvp(payload: RsvpPayload) {
   if (!response.ok) throw new Error(result.error || "We could not save your RSVP.");
 }
 
-export function RsvpDialog({ buttonRef }: { buttonRef?: Ref<HTMLButtonElement> }) {
+export function RsvpDialog({ pulse = false }: { pulse?: boolean }) {
   const [open, setOpen] = useState(false);
   const [attending, setAttending] = useState("yes");
   const [status, setStatus] = useState<Status>("idle");
@@ -105,7 +105,7 @@ export function RsvpDialog({ buttonRef }: { buttonRef?: Ref<HTMLButtonElement> }
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button ref={buttonRef} size="lg" className="rsvp-breathe min-h-14 rounded-full border border-[#d7b56d]/80 bg-[#6f1d31] px-9 text-base font-semibold uppercase tracking-[.16em] text-[#fffaf0] shadow-[0_14px_34px_rgb(71_25_40/22%)] hover:bg-[#561626] focus-visible:ring-[#b38a45]">
+        <Button size="lg" className={`${pulse ? "rsvp-arrived" : ""} min-h-14 rounded-full border border-[#d7b56d]/80 bg-[#6f1d31] px-9 text-base font-semibold uppercase tracking-[.16em] text-[#fffaf0] shadow-[0_14px_34px_rgb(71_25_40/22%)] hover:bg-[#561626] focus-visible:ring-[#b38a45]`}>
           RSVP
           <span aria-hidden="true">→</span>
         </Button>
