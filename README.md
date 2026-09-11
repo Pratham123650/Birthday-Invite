@@ -15,6 +15,12 @@ All guest-facing event content is centralized in `lib/event.ts`. Replace the ven
 
 The service-role key is used only in server routes and is never sent to the browser. RSVP rows have row-level security enabled and cannot be read directly by anonymous visitors.
 
+For GitHub Pages, the invitation uses the project's public Supabase URL and publishable key. Row-level security permits RSVP inserts while blocking anonymous reads, updates, and deletes. Set the repository variables `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`; every push to `main` then publishes the site automatically.
+
+## GitHub Pages
+
+The workflow in `.github/workflows/pages.yml` builds a static export at `/Birthday-Invite/` and publishes it with GitHub Pages. Server-only routes and the private admin page remain available only on a server-capable deployment; responses can always be viewed securely in the Supabase dashboard.
+
 ## Local development
 
 Run `npm install`, then `npm run dev`. The private guest-list dashboard is at `/admin`.

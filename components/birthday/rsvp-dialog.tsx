@@ -18,6 +18,56 @@ import { Textarea } from "@/components/ui/textarea";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
+type RsvpPayload = {
+  firstName: FormDataEntryValue | null;
+  lastName: FormDataEntryValue | null;
+  attending: boolean;
+  partySize: number;
+  additionalGuests: string[];
+  dietaryRestrictions: FormDataEntryValue | string | null;
+  message: FormDataEntryValue | null;
+};
+
+async function sendRsvp(payload: RsvpPayload) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+  if (process.env.NEXT_PUBLIC_STATIC_RSVP === "true") {
+    if (!supabaseUrl || !publishableKey) {
+      throw new Error("Online RSVPs are being finalized. Please check back soon.");
+    }
+
+    const response = await fetch(`${supabaseUrl}/rest/v1/rsvps`, {
+      method: "POST",
+      headers: {
+        apikey: publishableKey,
+        Authorization: `Bearer ${publishableKey}`,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify({
+        first_name: String(payload.firstName ?? "").trim(),
+        last_name: String(payload.lastName ?? "").trim(),
+        attending: payload.attending,
+        party_size: payload.attending ? payload.partySize : 0,
+        additional_guests: payload.attending ? payload.additionalGuests : [],
+        dietary_restrictions: payload.attending ? String(payload.dietaryRestrictions ?? "").trim() : "",
+        message: String(payload.message ?? "").trim(),
+      }),
+    });
+    if (!response.ok) throw new Error("We could not save your RSVP just now. Please try again.");
+    return;
+  }
+
+  const response = await fetch("/api/rsvp", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const result = await response.json() as { error?: string };
+  if (!response.ok) throw new Error(result.error || "We could not save your RSVP.");
+}
+
 export function RsvpDialog({ buttonRef }: { buttonRef?: Ref<HTMLButtonElement> }) {
   const [open, setOpen] = useState(false);
   const [attending, setAttending] = useState("yes");
@@ -36,21 +86,15 @@ export function RsvpDialog({ buttonRef }: { buttonRef?: Ref<HTMLButtonElement> }
       : [];
 
     try {
-      const response = await fetch("/api/rsvp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName: form.get("firstName"),
-          lastName: form.get("lastName"),
-          attending: isAttending,
-          partySize,
-          additionalGuests,
-          dietaryRestrictions: isAttending ? form.get("dietaryRestrictions") : "",
-          message: form.get("message"),
-        }),
+      await sendRsvp({
+        firstName: form.get("firstName"),
+        lastName: form.get("lastName"),
+        attending: isAttending,
+        partySize,
+        additionalGuests,
+        dietaryRestrictions: isAttending ? form.get("dietaryRestrictions") : "",
+        message: form.get("message"),
       });
-      const result = await response.json() as { error?: string };
-      if (!response.ok) throw new Error(result.error || "We could not save your RSVP.");
       setStatus("success");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "We could not save your RSVP.");

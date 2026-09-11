@@ -14,9 +14,27 @@ create table if not exists public.rsvps (
 
 alter table public.rsvps enable row level security;
 
--- The browser never talks directly to this table. All reads and writes pass
--- through server routes using the Supabase service-role key.
 revoke all on table public.rsvps from anon, authenticated;
+grant insert on table public.rsvps to anon, authenticated;
+
+drop policy if exists "Guests can submit RSVPs" on public.rsvps;
+create policy "Guests can submit RSVPs"
+on public.rsvps
+for insert
+to anon, authenticated
+with check (
+  char_length(first_name) between 1 and 80
+  and char_length(last_name) between 1 and 80
+  and party_size between 0 and 12
+  and jsonb_typeof(additional_guests) = 'array'
+  and jsonb_array_length(additional_guests) <= 11
+  and char_length(dietary_restrictions) <= 600
+  and char_length(message) <= 1200
+  and ((attending and party_size >= 1) or (not attending and party_size = 0))
+);
+
+-- Guests can submit a response, but anonymous and signed-in browser clients
+-- cannot read, update, or delete any RSVP rows.
 
 create index if not exists rsvps_submitted_at_idx
   on public.rsvps (submitted_at desc);
