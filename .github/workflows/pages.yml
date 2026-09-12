@@ -31,7 +31,7 @@ jobs:
         run: npm ci
 
       - name: Prepare static invitation
-        run: rm -rf app/api app/admin
+        run: rm -rf app/api
 
       - name: Build static site
         env:

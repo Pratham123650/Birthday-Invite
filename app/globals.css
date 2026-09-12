@@ -56,7 +56,9 @@
 html { scroll-behavior: smooth; background: var(--background); }
 body {
   margin: 0;
-  min-width: 320px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
@@ -84,6 +86,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .numeral-western { animation: numeral-shift 5s ease-in-out infinite; }
 .numeral-gujarati { animation: numeral-shift-alt 5s ease-in-out infinite; }
 .rsvp-arrived { animation: rsvp-arrived 700ms cubic-bezier(.65,0,.35,1) both; }
+.rsvp-sheet { overscroll-behavior: contain; }
 .success-confetti span {
   --angle: calc(var(--i) * 25.72deg);
   position: absolute;
@@ -115,6 +118,27 @@ summary::-webkit-details-marker { display: none; }
   0% { opacity: 0; transform: rotate(var(--angle)) translateY(0) rotate(0); }
   16% { opacity: 1; }
   100% { opacity: 0; transform: rotate(var(--angle)) translateY(-132px) rotate(210deg); }
+}
+
+@keyframes rsvp-sheet-in { from { opacity: .6; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
+@keyframes rsvp-sheet-out { from { opacity: 1; transform: translateY(0); } to { opacity: .6; transform: translateY(100%); } }
+
+@media (max-width: 639px) {
+  .rsvp-sheet {
+    inset: auto 0 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    transform: none !important;
+    translate: none !important;
+    border-radius: 1.5rem 1.5rem 0 0 !important;
+  }
+  .rsvp-sheet[data-state="open"] { animation: rsvp-sheet-in 260ms cubic-bezier(.2,.8,.2,1) both !important; }
+  .rsvp-sheet[data-state="closed"] { animation: rsvp-sheet-out 200ms ease-in both !important; }
+}
+
+@media (max-height: 420px) and (orientation: landscape) {
+  .intro-cake { scale: .78; }
+  .rsvp-sheet { max-height: 100svh !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {

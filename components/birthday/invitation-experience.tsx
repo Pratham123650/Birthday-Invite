@@ -62,7 +62,10 @@ function scrollToScene(element: HTMLElement, signal: AbortSignal, duration = 820
     if (signal.aborted) return resolve();
     const start = window.scrollY;
     const rect = element.getBoundingClientRect();
-    const unclampedTarget = start + rect.top + rect.height / 2 - window.innerHeight / 2;
+    const isTallerThanScene = rect.height > window.innerHeight * .82;
+    const unclampedTarget = isTallerThanScene
+      ? start + rect.top - Math.max(20, Math.min(64, window.innerHeight * .08))
+      : start + rect.top + rect.height / 2 - window.innerHeight / 2;
     const target = Math.max(0, Math.min(unclampedTarget, document.documentElement.scrollHeight - window.innerHeight));
     if (Math.abs(target - start) < 2) return resolve();
 
@@ -316,21 +319,21 @@ export function InvitationExperience() {
         </div>
       </RevealSection>
 
-      <RevealSection sectionRef={detailsRef} guidedReveal={guided ? detailsRevealed : undefined} className="relative px-5 py-24 sm:px-8 lg:py-32">
+      <RevealSection sectionRef={detailsRef} guidedReveal={guided ? detailsRevealed : undefined} className="relative px-5 py-16 sm:px-8 sm:py-24 lg:py-32">
         <div ref={detailsContentRef} className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-semibold uppercase tracking-[.25em] text-[#8b5a25]">Save the date</p>
             <h2 className="mt-4 font-serif text-[clamp(2.6rem,7vw,5rem)] leading-none tracking-[-.035em] text-[#351b1e]">Come celebrate with us</h2>
           </div>
 
-          <div className="mt-14 grid overflow-hidden border border-[#b38a45]/45 bg-[#fffaf0]/65 shadow-[0_22px_70px_rgb(68_31_28/8%)] md:grid-cols-2">
-            <div className="flex min-h-60 flex-col items-center justify-center border-b border-[#b38a45]/35 p-8 text-center md:border-b-0 md:border-r">
+          <div className="mt-10 grid overflow-hidden border border-[#b38a45]/45 bg-[#fffaf0]/65 shadow-[0_22px_70px_rgb(68_31_28/8%)] sm:mt-14 md:grid-cols-2">
+            <div className="flex min-h-48 flex-col items-center justify-center border-b border-[#b38a45]/35 p-6 text-center sm:min-h-60 sm:p-8 md:border-b-0 md:border-r">
               <CalendarDays className="size-7 text-[#8b5a25]" strokeWidth={1.5} aria-hidden="true" />
               <p className="mt-5 text-xs font-semibold uppercase tracking-[.22em] text-[#8b5a25]">Date</p>
               <time dateTime={event.dateISO} className="mt-2 font-serif text-3xl leading-tight text-[#6f1d31]">{event.date}</time>
               <div className="mt-5 flex items-center gap-2 text-lg text-[#351b1e]"><Clock3 className="size-5 text-[#8b5a25]" strokeWidth={1.5} aria-hidden="true" />{event.time}</div>
             </div>
-            <div className="flex min-h-60 flex-col items-center justify-center p-8 text-center">
+            <div className="flex min-h-48 flex-col items-center justify-center p-6 text-center sm:min-h-60 sm:p-8">
               <MapPin className="size-7 text-[#8b5a25]" strokeWidth={1.5} aria-hidden="true" />
               <p className="mt-5 text-xs font-semibold uppercase tracking-[.22em] text-[#8b5a25]">Location</p>
               <p className="mt-2 font-serif text-3xl leading-tight text-[#6f1d31]">{event.venue}</p>

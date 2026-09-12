@@ -2,6 +2,8 @@ import "server-only";
 
 export type RsvpRecord = {
   id: string;
+  guest_key: string | null;
+  guest_name: string | null;
   first_name: string;
   last_name: string;
   attending: boolean;
@@ -10,6 +12,16 @@ export type RsvpRecord = {
   dietary_restrictions: string;
   message: string;
   submitted_at: string;
+  updated_at: string | null;
+};
+
+export type RsvpInput = {
+  guest_name: string;
+  attending: boolean;
+  party_size: number;
+  additional_guests: string[];
+  dietary_restrictions: string;
+  message: string;
 };
 
 function credentials() {
@@ -42,12 +54,19 @@ async function request(path: string, init: RequestInit) {
   return response;
 }
 
-export async function createRsvp(input: Omit<RsvpRecord, "id" | "submitted_at">) {
-  await request("rsvps", {
+export async function submitRsvp(input: RsvpInput): Promise<{ status: "created" | "updated"; guest_name: string }> {
+  const response = await request("rpc/submit_rsvp", {
     method: "POST",
-    headers: { Prefer: "return=minimal" },
-    body: JSON.stringify(input),
+    body: JSON.stringify({
+      p_guest_name: input.guest_name,
+      p_attending: input.attending,
+      p_party_size: input.party_size,
+      p_additional_guests: input.additional_guests,
+      p_dietary_restrictions: input.dietary_restrictions,
+      p_message: input.message,
+    }),
   });
+  return response.json() as Promise<{ status: "created" | "updated"; guest_name: string }>;
 }
 
 export async function listRsvps(): Promise<RsvpRecord[]> {
