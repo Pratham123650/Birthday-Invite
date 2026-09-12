@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, LoaderCircle, X } from "lucide-react";
-import { useState, type CSSProperties, type FormEvent } from "react";
+import { useRef, useState, type CSSProperties, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -48,7 +48,8 @@ export function RsvpDialog({ pulse = false }: { pulse?: boolean }) {
   const [open, setOpen] = useState(false);
   const [guestName, setGuestName] = useState("");
   const [attending, setAttending] = useState("yes");
-  const [partySize, setPartySize] = useState(1);
+  const [partySizeInput, setPartySizeInput] = useState("1");
+  const replaceInitialPartySizeRef = useRef(true);
   const [additionalGuests, setAdditionalGuests] = useState<string[]>([]);
   const [dietaryRestrictions, setDietaryRestrictions] = useState("");
   const [message, setMessage] = useState("");
@@ -59,8 +60,23 @@ export function RsvpDialog({ pulse = false }: { pulse?: boolean }) {
   const selectedGuest = findApprovedGuest(guestName);
 
   function changePartySize(value: string) {
-    const nextSize = Math.min(12, Math.max(1, Number.parseInt(value, 10) || 1));
-    setPartySize(nextSize);
+    let nextInput = value.replace(/\D/g, "").slice(0, 2);
+    if (replaceInitialPartySizeRef.current && partySizeInput === "1" && nextInput.length > 1 && nextInput.startsWith("1")) {
+      nextInput = nextInput.slice(1);
+    }
+    replaceInitialPartySizeRef.current = false;
+    setPartySizeInput(nextInput);
+    const nextSize = Number.parseInt(nextInput, 10);
+    if (Number.isInteger(nextSize) && nextSize >= 1 && nextSize <= 12) {
+      setAdditionalGuests((current) => Array.from({ length: nextSize - 1 }, (_, index) => current[index] ?? ""));
+    }
+  }
+
+  function normalizePartySize() {
+    const parsed = Number.parseInt(partySizeInput, 10);
+    const nextSize = Number.isInteger(parsed) ? Math.min(12, Math.max(1, parsed)) : 1;
+    setPartySizeInput(String(nextSize));
+    replaceInitialPartySizeRef.current = nextSize === 1;
     setAdditionalGuests((current) => Array.from({ length: nextSize - 1 }, (_, index) => current[index] ?? ""));
   }
 
@@ -79,6 +95,12 @@ export function RsvpDialog({ pulse = false }: { pulse?: boolean }) {
     }
 
     const isAttending = attending === "yes";
+    const partySize = Number.parseInt(partySizeInput, 10);
+    if (isAttending && (!Number.isInteger(partySize) || partySize < 1 || partySize > 12)) {
+      setStatus("error");
+      setError("Please enter a number attending between 1 and 12.");
+      return;
+    }
     const trimmedAdditionalGuests = isAttending ? additionalGuests.map((name) => name.trim()) : [];
     if (isAttending && trimmedAdditionalGuests.some((name) => !name)) {
       setStatus("error");
@@ -179,7 +201,28 @@ export function RsvpDialog({ pulse = false }: { pulse?: boolean }) {
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
                       <div className="space-y-5 border-y border-[#b38a45]/25 py-6">
                         <label className="grid gap-2 text-base font-semibold text-[#351b1e]">Number attending
-                          <Input required type="number" min="1" max="12" inputMode="numeric" value={partySize} onChange={(event) => changePartySize(event.target.value)} className="h-13 border-[#bca67f] bg-white/70 px-4 text-base" />
+                          <Input
+                            required
+                            type="number"
+                            min="1"
+                            max="12"
+                            inputMode="numeric"
+                            enterKeyHint="done"
+                            value={partySizeInput}
+                            onFocus={(event) => {
+                              replaceInitialPartySizeRef.current = partySizeInput === "1";
+                              event.currentTarget.select();
+                            }}
+                            onClick={(event) => {
+                              if (partySizeInput === "1") {
+                                replaceInitialPartySizeRef.current = true;
+                                event.currentTarget.select();
+                              }
+                            }}
+                            onChange={(event) => changePartySize(event.target.value)}
+                            onBlur={normalizePartySize}
+                            className="h-13 border-[#bca67f] bg-white/70 px-4 text-base"
+                          />
                           <span className="text-sm font-normal text-[#6f5a51]">Include yourself.</span>
                         </label>
 

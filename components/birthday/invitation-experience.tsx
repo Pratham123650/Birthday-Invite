@@ -153,6 +153,39 @@ function RevealSection({ children, className = "", sectionRef, id, guidedReveal 
   );
 }
 
+function MemoryPhoto({ src, alt, width, height, sizes, className = "", frameClassName = "" }: {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  sizes: string;
+  className?: string;
+  frameClassName?: string;
+}) {
+  const reduceMotion = useReducedMotion();
+  return (
+    <motion.figure
+      initial={reduceMotion ? false : { opacity: 0, y: 14, scale: .99 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, amount: .24 }}
+      transition={{ duration: .7, ease: [.22, .8, .25, 1] }}
+      className={className}
+    >
+      <div className={`overflow-hidden border border-[#d7b56d]/55 bg-[#fffaf0] p-2 shadow-[0_18px_44px_rgb(39_15_20/18%)] ${frameClassName}`}>
+        <Image
+          src={src}
+          alt={alt}
+          width={width}
+          height={height}
+          sizes={sizes}
+          loading="lazy"
+          className="h-auto w-full"
+        />
+      </div>
+    </motion.figure>
+  );
+}
+
 export function InvitationExperience() {
   const [showIntro, setShowIntro] = useState(true);
   const [phase, setPhase] = useState<ScenePhase>("intro");
@@ -313,19 +346,50 @@ export function InvitationExperience() {
       <RevealSection id="invitation" sectionRef={messageRef} guidedReveal={guided ? messageRevealed : undefined} className="relative grid min-h-[82svh] place-items-center overflow-hidden bg-[#6f1d31] px-6 py-24 text-[#fffaf0]">
         <div className="absolute inset-y-0 left-1/2 w-px bg-[#d7b56d]/20" aria-hidden="true" />
         <div className="absolute left-1/2 top-0 h-24 w-px bg-[#d7b56d]/80" aria-hidden="true" />
-        <div ref={messageContentRef} className="relative z-10 mx-auto max-w-4xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-[.26em] text-[#d7b56d]">A life beautifully lived</p>
-          <h2 className="mt-7 text-balance font-serif text-[clamp(2.5rem,8vw,6rem)] leading-[1.02] tracking-[-.035em]">75 years. Countless memories. One remarkable journey.</h2>
-          <p className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-[#f1e5d5]">With grateful hearts, we invite you to celebrate the stories, values, and enduring warmth Sureshchandra has shared with us all.</p>
-          <div className="mx-auto mt-12 h-10 w-10 rotate-45 border border-[#d7b56d]/70" aria-hidden="true"><div className="m-[7px] h-6 w-6 border border-[#d7b56d]/40" /></div>
+        <div ref={messageContentRef} className="relative z-10 mx-auto grid w-full max-w-6xl items-center gap-10 lg:grid-cols-[minmax(0,1.04fr)_minmax(18rem,.96fr)] lg:gap-14">
+          <div className="text-center lg:text-left">
+            <p className="text-sm font-semibold uppercase tracking-[.26em] text-[#d7b56d]">A life beautifully lived</p>
+            <h2 className="mt-7 text-balance font-serif text-[clamp(2.5rem,7vw,5.4rem)] leading-[1.02] tracking-[-.035em]">75 years. Countless memories. One remarkable journey.</h2>
+            <MemoryPhoto
+              src="/memory-vintage-couple.webp"
+              alt="A cherished vintage family portrait of a couple"
+              width={430}
+              height={295}
+              sizes="(max-width: 1023px) 76vw, 16rem"
+              className="mx-auto mt-9 w-[min(76vw,17rem)] lg:mx-0 lg:-rotate-1"
+              frameClassName="rounded-[.25rem]"
+            />
+            <p className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-[#f1e5d5] lg:mx-0">With grateful hearts, we invite you to celebrate the stories, values, and enduring warmth Sureshchandra has shared with us all.</p>
+            <div className="mx-auto mt-10 h-10 w-10 rotate-45 border border-[#d7b56d]/70 lg:mx-0" aria-hidden="true"><div className="m-[7px] h-6 w-6 border border-[#d7b56d]/40" /></div>
+          </div>
+          <MemoryPhoto
+            src="/memory-family-travel.webp"
+            alt="A treasured family memory with Sureshchandra"
+            width={960}
+            height={720}
+            sizes="(max-width: 1023px) calc(100vw - 3rem), 42vw"
+            className="mx-auto w-full max-w-[34rem] lg:rotate-[.35deg]"
+            frameClassName="rounded-[.35rem]"
+          />
         </div>
       </RevealSection>
 
       <RevealSection sectionRef={detailsRef} guidedReveal={guided ? detailsRevealed : undefined} className="relative px-5 py-16 sm:px-8 sm:py-24 lg:py-32">
         <div ref={detailsContentRef} className="mx-auto max-w-6xl">
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="text-sm font-semibold uppercase tracking-[.25em] text-[#8b5a25]">Save the date</p>
-            <h2 className="mt-4 font-serif text-[clamp(2.6rem,7vw,5rem)] leading-none tracking-[-.035em] text-[#351b1e]">Come celebrate with us</h2>
+          <div className="mx-auto grid max-w-4xl items-center gap-8 md:grid-cols-[15rem_minmax(0,1fr)] md:gap-12">
+            <MemoryPhoto
+              src="/memory-bench-portrait.webp"
+              alt="Sureshchandra sharing a family moment on a park bench"
+              width={540}
+              height={960}
+              sizes="(max-width: 767px) 58vw, 15rem"
+              className="order-2 mx-auto w-[min(58vw,13rem)] md:order-1 md:w-full md:-rotate-1"
+              frameClassName="rounded-[.35rem]"
+            />
+            <div className="order-1 mx-auto max-w-2xl text-center md:order-2 md:mx-0 md:text-left">
+              <p className="text-sm font-semibold uppercase tracking-[.25em] text-[#8b5a25]">Save the date</p>
+              <h2 className="mt-4 font-serif text-[clamp(2.6rem,7vw,5rem)] leading-none tracking-[-.035em] text-[#351b1e]">Come celebrate with us</h2>
+            </div>
           </div>
 
           <div className="mt-10 grid overflow-hidden border border-[#b38a45]/45 bg-[#fffaf0]/65 shadow-[0_22px_70px_rgb(68_31_28/8%)] sm:mt-14 md:grid-cols-2">
