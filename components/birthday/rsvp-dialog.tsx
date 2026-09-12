@@ -25,8 +25,6 @@ type RsvpPayload = {
   guestName: string;
   attending: boolean;
   partySize: number;
-  additionalGuests: string[];
-  dietaryRestrictions: string;
   message: string;
 };
 
@@ -50,8 +48,6 @@ export function RsvpDialog({ pulse = false }: { pulse?: boolean }) {
   const [attending, setAttending] = useState("yes");
   const [partySizeInput, setPartySizeInput] = useState("1");
   const replaceInitialPartySizeRef = useRef(true);
-  const [additionalGuests, setAdditionalGuests] = useState<string[]>([]);
-  const [dietaryRestrictions, setDietaryRestrictions] = useState("");
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [saveResult, setSaveResult] = useState<SaveResult | null>(null);
@@ -66,10 +62,6 @@ export function RsvpDialog({ pulse = false }: { pulse?: boolean }) {
     }
     replaceInitialPartySizeRef.current = false;
     setPartySizeInput(nextInput);
-    const nextSize = Number.parseInt(nextInput, 10);
-    if (Number.isInteger(nextSize) && nextSize >= 1 && nextSize <= 12) {
-      setAdditionalGuests((current) => Array.from({ length: nextSize - 1 }, (_, index) => current[index] ?? ""));
-    }
   }
 
   function normalizePartySize() {
@@ -77,11 +69,6 @@ export function RsvpDialog({ pulse = false }: { pulse?: boolean }) {
     const nextSize = Number.isInteger(parsed) ? Math.min(12, Math.max(1, parsed)) : 1;
     setPartySizeInput(String(nextSize));
     replaceInitialPartySizeRef.current = nextSize === 1;
-    setAdditionalGuests((current) => Array.from({ length: nextSize - 1 }, (_, index) => current[index] ?? ""));
-  }
-
-  function changeAdditionalGuest(index: number, value: string) {
-    setAdditionalGuests((current) => current.map((name, currentIndex) => currentIndex === index ? value : name));
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -101,12 +88,6 @@ export function RsvpDialog({ pulse = false }: { pulse?: boolean }) {
       setError("Please enter a number attending between 1 and 12.");
       return;
     }
-    const trimmedAdditionalGuests = isAttending ? additionalGuests.map((name) => name.trim()) : [];
-    if (isAttending && trimmedAdditionalGuests.some((name) => !name)) {
-      setStatus("error");
-      setError("Please enter the name of each additional guest.");
-      return;
-    }
 
     setStatus("submitting");
     try {
@@ -114,8 +95,6 @@ export function RsvpDialog({ pulse = false }: { pulse?: boolean }) {
         guestName,
         attending: isAttending,
         partySize: isAttending ? partySize : 0,
-        additionalGuests: trimmedAdditionalGuests,
-        dietaryRestrictions: isAttending ? dietaryRestrictions.trim() : "",
         message: message.trim(),
       });
       setSaveResult(result);
@@ -224,21 +203,6 @@ export function RsvpDialog({ pulse = false }: { pulse?: boolean }) {
                             className="h-13 border-[#bca67f] bg-white/70 px-4 text-base"
                           />
                           <span className="text-sm font-normal text-[#6f5a51]">Include yourself.</span>
-                        </label>
-
-                        {additionalGuests.length > 0 && (
-                          <fieldset className="space-y-3">
-                            <legend className="text-base font-semibold text-[#351b1e]">Additional guest names</legend>
-                            {additionalGuests.map((name, index) => (
-                              <label key={index} className="grid gap-2 text-sm font-semibold text-[#6f5a51]">Guest {index + 2}
-                                <Input required value={name} onChange={(event) => changeAdditionalGuest(index, event.target.value)} autoComplete="off" className="h-13 border-[#bca67f] bg-white/70 px-4 text-base text-[#351b1e]" />
-                              </label>
-                            ))}
-                          </fieldset>
-                        )}
-
-                        <label className="grid gap-2 text-base font-semibold text-[#351b1e]">Dietary restrictions
-                          <Textarea value={dietaryRestrictions} onChange={(event) => setDietaryRestrictions(event.target.value)} rows={2} maxLength={600} placeholder="Optional" className="min-h-24 border-[#bca67f] bg-white/70 px-4 py-3 text-base" />
                         </label>
                       </div>
                     </motion.div>

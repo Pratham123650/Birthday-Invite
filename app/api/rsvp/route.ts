@@ -7,8 +7,6 @@ const rsvpSchema = z.object({
   guestName: z.string().trim().refine(isApprovedGuestName, "Select an approved guest."),
   attending: z.boolean(),
   partySize: z.number().int().min(0).max(12),
-  additionalGuests: z.array(z.string().trim().min(1).max(120)).max(11),
-  dietaryRestrictions: z.string().trim().max(600),
   message: z.string().trim().max(1200),
 }).superRefine((value, context) => {
   if (value.attending && value.partySize < 1) {
@@ -16,12 +14,6 @@ const rsvpSchema = z.object({
   }
   if (!value.attending && value.partySize !== 0) {
     context.addIssue({ code: "custom", path: ["partySize"], message: "Declined responses must have a party size of zero." });
-  }
-  if (value.attending && value.additionalGuests.length !== value.partySize - 1) {
-    context.addIssue({ code: "custom", path: ["additionalGuests"], message: "Enter one name for each additional guest." });
-  }
-  if (!value.attending && value.additionalGuests.length !== 0) {
-    context.addIssue({ code: "custom", path: ["additionalGuests"], message: "Declined responses cannot include additional guests." });
   }
 });
 
@@ -39,8 +31,8 @@ export async function POST(request: Request) {
       guest_name: approvedGuest.name,
       attending: value.attending,
       party_size: value.attending ? value.partySize : 0,
-      additional_guests: value.attending ? value.additionalGuests : [],
-      dietary_restrictions: value.attending ? value.dietaryRestrictions : "",
+      additional_guests: [],
+      dietary_restrictions: "",
       message: value.message,
     });
     return NextResponse.json({ ok: true, status: result.status, guestName: result.guest_name });

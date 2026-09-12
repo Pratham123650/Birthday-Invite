@@ -14,8 +14,6 @@ type Rsvp = {
   guest_name: string;
   attending: boolean;
   party_size: number;
-  additional_guests: string[];
-  dietary_restrictions: string;
   message: string;
   submitted_at: string;
   updated_at: string;
@@ -93,13 +91,11 @@ export default function AdminPage() {
       name,
       responseLabel(response),
       response?.party_size ?? 0,
-      response?.additional_guests.join("; ") ?? "",
-      response?.dietary_restrictions ?? "",
       response?.message ?? "",
       response ? new Date(response.updated_at || response.submitted_at).toLocaleString() : "",
     ]);
     const csv = [
-      ["Guest", "Response", "Party size", "Additional guests", "Dietary restrictions", "Message", "Last updated"],
+      ["Guest", "Response", "Party size", "Message", "Last updated"],
       ...csvRows,
     ].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
@@ -166,8 +162,6 @@ export default function AdminPage() {
                   <dl className="mt-5 grid gap-4 text-base sm:grid-cols-2">
                     <div><dt className="text-sm font-semibold uppercase tracking-[.12em] text-[#8b5a25]">Party</dt><dd className="mt-1">{response.party_size}</dd></div>
                     <div><dt className="text-sm font-semibold uppercase tracking-[.12em] text-[#8b5a25]">Updated</dt><dd className="mt-1">{new Date(response.updated_at || response.submitted_at).toLocaleString()}</dd></div>
-                    <div><dt className="text-sm font-semibold uppercase tracking-[.12em] text-[#8b5a25]">Additional guests</dt><dd className="mt-1 break-words">{response.additional_guests.join(", ") || "—"}</dd></div>
-                    <div><dt className="text-sm font-semibold uppercase tracking-[.12em] text-[#8b5a25]">Dietary notes</dt><dd className="mt-1 break-words">{response.dietary_restrictions || "—"}</dd></div>
                     <div className="sm:col-span-2"><dt className="text-sm font-semibold uppercase tracking-[.12em] text-[#8b5a25]">Message</dt><dd className="mt-1 break-words">{response.message || "—"}</dd></div>
                   </dl>
                 ) : (
@@ -179,15 +173,13 @@ export default function AdminPage() {
 
           <div className="hidden overflow-x-auto border border-[#b38a45]/35 bg-[#fffaf0]/75 p-5 shadow-[0_18px_50px_rgb(68_31_28/8%)] lg:block">
             <Table>
-              <TableHeader><TableRow className="border-[#b38a45]/35"><TableHead>Guest</TableHead><TableHead>Response</TableHead><TableHead>Party</TableHead><TableHead>Additional guests</TableHead><TableHead>Dietary notes</TableHead><TableHead>Message</TableHead><TableHead>Updated</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow className="border-[#b38a45]/35"><TableHead>Guest</TableHead><TableHead>Response</TableHead><TableHead>Party</TableHead><TableHead>Message</TableHead><TableHead>Updated</TableHead></TableRow></TableHeader>
               <TableBody>
                 {rows.map(({ key, name, response }) => (
                   <TableRow key={key} className="border-[#b38a45]/25 align-top">
                     <TableCell className="font-semibold">{name}</TableCell>
                     <TableCell><span className={`inline-block rounded-full border px-3 py-1 text-sm font-semibold ${responseClass(response)}`}>{responseLabel(response)}</span></TableCell>
                     <TableCell>{response?.party_size ?? "—"}</TableCell>
-                    <TableCell className="max-w-56 whitespace-normal">{response?.additional_guests.join(", ") || "—"}</TableCell>
-                    <TableCell className="max-w-64 whitespace-normal">{response?.dietary_restrictions || "—"}</TableCell>
                     <TableCell className="max-w-72 whitespace-normal">{response?.message || "—"}</TableCell>
                     <TableCell>{response ? new Date(response.updated_at || response.submitted_at).toLocaleString() : "—"}</TableCell>
                   </TableRow>
