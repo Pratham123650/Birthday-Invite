@@ -26,21 +26,21 @@ export type RsvpInput = {
 
 function credentials() {
   const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceKey) {
+  const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !publishableKey) {
     throw new Error("RSVP_STORAGE_NOT_CONFIGURED");
   }
-  return { url, serviceKey };
+  return { url, publishableKey };
 }
 
 async function request(path: string, init: RequestInit) {
-  const { url, serviceKey } = credentials();
+  const { url, publishableKey } = credentials();
   const response = await fetch(`${url}/rest/v1/${path}`, {
     ...init,
     cache: "no-store",
     headers: {
-      apikey: serviceKey,
-      Authorization: `Bearer ${serviceKey}`,
+      apikey: publishableKey,
+      Authorization: `Bearer ${publishableKey}`,
       "Content-Type": "application/json",
       ...(init.headers ?? {}),
     },

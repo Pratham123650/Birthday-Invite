@@ -83,6 +83,8 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .intro-confetti span { animation: confetti-pop 520ms cubic-bezier(.1,.7,.2,1) 940ms both; }
 .intro-screen { animation: intro-away 300ms ease 1180ms forwards; }
 .hero-reveal { animation: hero-in 900ms cubic-bezier(.2,.8,.2,1) both; }
+.milestone-reveal { animation: ceremonial-title-in 620ms cubic-bezier(.2,.8,.2,1) 360ms both; }
+.celebration-reveal { animation: ceremonial-title-in 620ms cubic-bezier(.2,.8,.2,1) 690ms both; }
 .numeral-western { animation: numeral-shift 5s ease-in-out infinite; }
 .numeral-gujarati { animation: numeral-shift-alt 5s ease-in-out infinite; }
 .rsvp-arrived { animation: rsvp-arrived 700ms cubic-bezier(.65,0,.35,1) both; }
@@ -111,6 +113,7 @@ summary::-webkit-details-marker { display: none; }
 @keyframes confetti-pop { from { opacity: 0; transform: translate(0,0) rotate(0); } to { opacity: 1; transform: translate(var(--x),var(--y)) rotate(var(--r)); } }
 @keyframes intro-away { to { opacity: 0; visibility: hidden; } }
 @keyframes hero-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes ceremonial-title-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes numeral-shift { 0%,40% { opacity: 1; transform: translateY(0); } 50%,90% { opacity: 0; transform: translateY(-12%); } 100% { opacity: 1; } }
 @keyframes numeral-shift-alt { 0%,40% { opacity: 0; transform: translateY(12%); } 50%,90% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; } }
 @keyframes rsvp-arrived { 0%,100% { transform: scale(1); } 50% { transform: scale(1.035); } }
@@ -129,7 +132,8 @@ summary::-webkit-details-marker { display: none; }
     width: 100% !important;
     max-width: none !important;
     transform: none !important;
-    translate: none !important;
+    --tw-translate-x: 0px !important;
+    --tw-translate-y: 0px !important;
     border-radius: 1.5rem 1.5rem 0 0 !important;
   }
   .rsvp-sheet[data-state="open"] { animation: rsvp-sheet-in 260ms cubic-bezier(.2,.8,.2,1) both !important; }
@@ -148,4 +152,5 @@ summary::-webkit-details-marker { display: none; }
     scroll-behavior: auto !important;
     transition-duration: 0.001ms !important;
   }
+  .milestone-reveal, .celebration-reveal { animation-delay: 0ms !important; }
 }
