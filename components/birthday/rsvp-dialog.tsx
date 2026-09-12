@@ -31,38 +31,6 @@ type RsvpPayload = {
 };
 
 async function sendRsvp(payload: RsvpPayload): Promise<SaveResult> {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
-  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-  if (process.env.NEXT_PUBLIC_STATIC_RSVP === "true") {
-    if (!supabaseUrl || !publishableKey) {
-      throw new Error("Online RSVPs are being finalized. Please check back soon.");
-    }
-
-    const response = await fetch(`${supabaseUrl}/rest/v1/rpc/submit_rsvp`, {
-      method: "POST",
-      headers: {
-        apikey: publishableKey,
-        Authorization: `Bearer ${publishableKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        p_guest_name: payload.guestName,
-        p_attending: payload.attending,
-        p_party_size: payload.attending ? payload.partySize : 0,
-        p_additional_guests: payload.attending ? payload.additionalGuests : [],
-        p_dietary_restrictions: payload.attending ? payload.dietaryRestrictions : "",
-        p_message: payload.message,
-      }),
-    });
-    if (!response.ok) throw new Error("We could not save your RSVP just now. Please try again.");
-    const result = await response.json() as { status?: "created" | "updated"; guest_name?: string };
-    return {
-      status: result.status === "updated" ? "updated" : "created",
-      guestName: result.guest_name || payload.guestName,
-    };
-  }
-
   const response = await fetch("/api/rsvp", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

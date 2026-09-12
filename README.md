@@ -10,16 +10,15 @@ All guest-facing event content is centralized in `lib/event.ts`. The seven appro
 
 1. Create a Supabase project and run `supabase/schema.sql` in its SQL editor.
 2. Set the admin password using the separate SQL statement documented at the bottom of that file. Do not commit the plaintext password.
-3. Copy `.env.example` to `.env.local` and add the public Supabase URL and publishable key.
-4. For server deployments, also set `SUPABASE_URL`, the server-only service-role key, `ADMIN_PASSWORD`, and a random `SESSION_SECRET` of at least 32 characters.
+3. Copy `.env.example` to `.env.local` and add the Supabase URL and publishable key for both the server RSVP route and browser-based admin dashboard.
 
-The service-role key is used only in server routes and is never sent to the browser. RSVP rows have row-level security enabled and cannot be read directly by anonymous visitors.
+RSVP rows have row-level security enabled and cannot be read directly by anonymous visitors. Guests can only call a narrowly scoped database function that validates the approved-name list and safely creates or updates one household response. The password-protected admin dashboard calls a separate read-only database function.
 
-For GitHub Pages, the invitation uses the project's public Supabase URL and publishable key. Guests can only call narrowly scoped RSVP functions: approved-name validation and duplicate updates happen inside PostgreSQL, while anonymous table reads and writes remain blocked. Set the repository variables `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`; every push to `main` then publishes the invitation and password-protected `/admin/` dashboard automatically.
+## Deployment
 
-## GitHub Pages
+The production site is hosted on Vercel at `https://amrut-mahotsav.vercel.app`. Vercel is connected to the GitHub repository, and each push to `main` automatically creates a production deployment.
 
-The workflow in `.github/workflows/pages.yml` builds a static export at `/Birthday-Invite/` and publishes it with GitHub Pages. Server-only API routes are excluded from the export; RSVP submission and the admin dashboard use the validated Supabase RPC functions.
+Configure `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for Production and Preview in Vercel. The GitHub repository remains the source of truth; the former GitHub Pages workflow has been retired now that Vercel is live.
 
 ## Local development
 

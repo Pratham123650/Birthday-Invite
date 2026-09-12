@@ -6,7 +6,6 @@ import { CalendarDays, ChevronDown, Clock3, MapPin } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import { event } from "@/lib/event";
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const RsvpDialog = lazy(() => import("@/components/birthday/rsvp-dialog").then((module) => ({ default: module.RsvpDialog })));
 
 function RsvpPlaceholder() {
@@ -302,7 +301,7 @@ export function InvitationExperience() {
           <figure className="mx-auto w-full max-w-[25rem] lg:max-w-none">
             <div className="relative aspect-[4/5] overflow-hidden rounded-t-[9rem] border border-[#b38a45]/65 bg-[#e8dbc5] p-2 shadow-[0_24px_70px_rgb(68_31_28/18%)] sm:rounded-t-[13rem]">
               <div className="relative h-full w-full overflow-hidden rounded-t-[8.4rem] sm:rounded-t-[12.4rem]">
-                <Image src={`${basePath}/sureshchandra.jpeg`} alt="Sureshchandra, whose 75th birthday we are celebrating" fill priority sizes="(max-width: 1024px) 90vw, 45vw" className="scale-[1.18] object-cover object-[50%_54%]" />
+                <Image src="/sureshchandra.jpeg" alt="Sureshchandra, whose 75th birthday we are celebrating" fill priority sizes="(max-width: 1024px) 90vw, 45vw" className="scale-[1.18] object-cover object-[50%_54%]" />
                 <div className="absolute inset-0 bg-[#6f1d31]/[.02]" />
               </div>
             </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { Download, LoaderCircle, LockKeyhole, LogOut, Users } from "lucide-react";
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +23,6 @@ type Rsvp = {
 
 type GuestRow = (typeof approvedGuests)[number] & { response?: Rsvp };
 type View = "locked" | "loading" | "ready" | "error";
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 async function loadRsvps(password: string) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
@@ -123,7 +123,7 @@ export default function AdminPage() {
           <Button disabled={view === "loading"} type="submit" className="mt-6 min-h-13 w-full rounded-full bg-[#6f1d31] text-base text-[#fffaf0]">
             {view === "loading" ? <><LoaderCircle className="animate-spin" /> Opening guest list</> : "Open guest list"}
           </Button>
-          <a href={`${basePath}/`} className="mt-5 block min-h-11 py-2 text-center text-sm font-semibold text-[#6f1d31] underline-offset-4 hover:underline">Return to invitation</a>
+          <Link href="/" className="mt-5 block min-h-11 py-2 text-center text-sm font-semibold text-[#6f1d31] underline-offset-4 hover:underline">Return to invitation</Link>
         </form>
       </main>
     );
