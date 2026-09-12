@@ -315,11 +315,7 @@ export function InvitationExperience() {
               <span className="numeral-western absolute inset-0">{event.westernNumeral}</span>
               <span className="numeral-gujarati absolute inset-0" lang="gu">{event.gujaratiNumeral}</span>
             </div>
-            <div className={`${phase === "intro" ? "" : "milestone-reveal"} mb-6 space-y-1.5`}>
-              <p className="font-serif text-[clamp(1.75rem,6vw,2.75rem)] leading-tight tracking-[.025em] text-[#6f1d31]">{event.milestoneTitle}</p>
-              <p className="font-serif text-xl leading-tight text-[#8b5a25] sm:text-2xl" lang="gu">{event.gujaratiMilestone}</p>
-            </div>
-            <h1 id="hero-title" className={`${phase === "intro" ? "" : "celebration-reveal"} text-balance font-serif text-[clamp(2.35rem,7vw,5.2rem)] leading-[.96] tracking-[-.04em] text-[#351b1e]`}>
+            <h1 id="hero-title" className={`${phase === "intro" ? "" : "celebration-reveal"} mt-5 text-balance font-serif text-[clamp(2.35rem,7vw,5.2rem)] leading-[.96] tracking-[-.04em] text-[#351b1e]`}>
               Celebrating <span className="italic text-[#6f1d31]">{event.honoree}</span>
             </h1>
             <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-[#6f5a51] lg:mx-0">Join our family in honoring seventy-five wonderful years of love, wisdom, and cherished memories.</p>

@@ -16,7 +16,7 @@ RSVP rows have row-level security enabled and cannot be read directly by anonymo
 
 ## Deployment
 
-The production site is hosted on Vercel at `https://amrut-mahotsav.vercel.app`. Vercel is connected to the GitHub repository, and each push to `main` automatically creates a production deployment.
+The production site is hosted on Vercel at `https://birthday-celebration-75.vercel.app`. Vercel is connected to the GitHub repository, and each push to `main` automatically creates a production deployment.
 
 Configure `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for Production and Preview in Vercel. The GitHub repository remains the source of truth; the former GitHub Pages workflow has been retired now that Vercel is live.
 

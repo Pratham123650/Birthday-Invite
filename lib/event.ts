@@ -3,8 +3,6 @@ export const event = {
   age: 75,
   westernNumeral: "75",
   gujaratiNumeral: "૭૫",
-  milestoneTitle: "Amrut Mahotsav",
-  gujaratiMilestone: "અમૃત મહોત્સવ",
   dateISO: "2026-09-20",
   date: "Sunday, September 20, 2026",
   shortDate: "September 20, 2026",

@@ -83,8 +83,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .intro-confetti span { animation: confetti-pop 520ms cubic-bezier(.1,.7,.2,1) 940ms both; }
 .intro-screen { animation: intro-away 300ms ease 1180ms forwards; }
 .hero-reveal { animation: hero-in 900ms cubic-bezier(.2,.8,.2,1) both; }
-.milestone-reveal { animation: ceremonial-title-in 620ms cubic-bezier(.2,.8,.2,1) 360ms both; }
-.celebration-reveal { animation: ceremonial-title-in 620ms cubic-bezier(.2,.8,.2,1) 690ms both; }
+.celebration-reveal { animation: ceremonial-title-in 620ms cubic-bezier(.2,.8,.2,1) 420ms both; }
 .numeral-western { animation: numeral-shift 5s ease-in-out infinite; }
 .numeral-gujarati { animation: numeral-shift-alt 5s ease-in-out infinite; }
 .rsvp-arrived { animation: rsvp-arrived 700ms cubic-bezier(.65,0,.35,1) both; }
@@ -152,5 +151,5 @@ summary::-webkit-details-marker { display: none; }
     scroll-behavior: auto !important;
     transition-duration: 0.001ms !important;
   }
-  .milestone-reveal, .celebration-reveal { animation-delay: 0ms !important; }
+  .celebration-reveal { animation-delay: 0ms !important; }
 }
