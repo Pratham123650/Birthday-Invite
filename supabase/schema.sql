@@ -17,7 +17,15 @@ values
   ('jagdish-patel', 'Jagdish Patel', 'Jagdish', 'Patel', 4),
   ('suresh-patel', 'Suresh Patel', 'Suresh', 'Patel', 5),
   ('manisha-patel', 'Manisha Patel', 'Manisha', 'Patel', 6),
-  ('bijal-patel', 'Bijal Patel', 'Bijal', 'Patel', 7)
+  ('bijal-patel', 'Bijal Patel', 'Bijal', 'Patel', 7),
+  ('satishbhai-patel', 'Satishbhai Patel', 'Satishbhai', 'Patel', 8),
+  ('kokilaben-patel', 'Kokilaben Patel', 'Kokilaben', 'Patel', 9),
+  ('dilipbhai-patel', 'Dilipbhai Patel', 'Dilipbhai', 'Patel', 10),
+  ('bhavna-patel', 'Bhavna Patel', 'Bhavna', 'Patel', 11),
+  ('hitesh-patel', 'Hitesh Patel', 'Hitesh', 'Patel', 12),
+  ('hasmukhbhai-patel', 'Hasmukhbhai Patel', 'Hasmukhbhai', 'Patel', 13),
+  ('kanchanbhai-patel', 'Kanchanbhai Patel', 'Kanchanbhai', 'Patel', 14),
+  ('purvi-patel', 'Purvi Patel', 'Purvi', 'Patel', 15)
 on conflict (guest_key) do update set
   full_name = excluded.full_name,
   first_name = excluded.first_name,

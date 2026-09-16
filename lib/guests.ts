@@ -6,6 +6,14 @@ export const approvedGuests = [
   { key: "suresh-patel", name: "Suresh Patel", firstName: "Suresh", lastName: "Patel" },
   { key: "manisha-patel", name: "Manisha Patel", firstName: "Manisha", lastName: "Patel" },
   { key: "bijal-patel", name: "Bijal Patel", firstName: "Bijal", lastName: "Patel" },
+  { key: "satishbhai-patel", name: "Satishbhai Patel", firstName: "Satishbhai", lastName: "Patel" },
+  { key: "kokilaben-patel", name: "Kokilaben Patel", firstName: "Kokilaben", lastName: "Patel" },
+  { key: "dilipbhai-patel", name: "Dilipbhai Patel", firstName: "Dilipbhai", lastName: "Patel" },
+  { key: "bhavna-patel", name: "Bhavna Patel", firstName: "Bhavna", lastName: "Patel" },
+  { key: "hitesh-patel", name: "Hitesh Patel", firstName: "Hitesh", lastName: "Patel" },
+  { key: "hasmukhbhai-patel", name: "Hasmukhbhai Patel", firstName: "Hasmukhbhai", lastName: "Patel" },
+  { key: "kanchanbhai-patel", name: "Kanchanbhai Patel", firstName: "Kanchanbhai", lastName: "Patel" },
+  { key: "purvi-patel", name: "Purvi Patel", firstName: "Purvi", lastName: "Patel" },
 ] as const;
 
 export type ApprovedGuest = (typeof approvedGuests)[number];

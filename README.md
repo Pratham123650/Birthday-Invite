@@ -4,7 +4,7 @@ A mobile-first birthday invitation and RSVP experience for Sureshchandra’s 75t
 
 ## Event details
 
-All guest-facing event content is centralized in `lib/event.ts`. The seven approved RSVP names are centralized in `lib/guests.ts` and mirrored in the database migration.
+All guest-facing event content is centralized in `lib/event.ts`. The approved RSVP names are centralized in `lib/guests.ts` and mirrored in the database migration.
 
 ## RSVP setup
 

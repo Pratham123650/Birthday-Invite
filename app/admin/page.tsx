@@ -139,7 +139,7 @@ export default function AdminPage() {
     <main className="min-h-[100svh] bg-[#f8f1e5] px-4 py-8 text-[#351b1e] sm:px-8 lg:px-12">
       <div className="mx-auto max-w-7xl">
         <header className="flex flex-col gap-6 border-b border-[#b38a45]/45 pb-7 sm:flex-row sm:items-end sm:justify-between">
-          <div><p className="text-sm font-semibold uppercase tracking-[.2em] text-[#8b5a25]">Sureshchandra · 75</p><h1 className="mt-2 font-serif text-4xl sm:text-5xl">RSVP guest list</h1><p className="mt-3 text-base text-[#6f5a51]">All seven invited guests, including those who have not replied.</p></div>
+          <div><p className="text-sm font-semibold uppercase tracking-[.2em] text-[#8b5a25]">Sureshchandra · 75</p><h1 className="mt-2 font-serif text-4xl sm:text-5xl">RSVP guest list</h1><p className="mt-3 text-base text-[#6f5a51]">All {approvedGuests.length} invited guests, including those who have not replied.</p></div>
           <div className="grid grid-cols-2 gap-3 sm:flex">
             <Button onClick={exportCsv} variant="outline" className="min-h-12 border-[#b38a45]/60 bg-[#fffaf0]"><Download /> Export CSV</Button>
             <Button onClick={logout} variant="ghost" className="min-h-12 text-[#6f1d31]"><LogOut /> Sign out</Button>
