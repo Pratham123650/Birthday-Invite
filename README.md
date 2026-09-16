@@ -1,6 +1,6 @@
 # Sureshchandra at 75
 
-A mobile-first birthday invitation and RSVP experience for Sureshchandra’s 75th birthday on September 20, 2026 at 11:30 AM.
+A mobile-first birthday invitation and RSVP experience for Sureshchandra’s 75th birthday on September 20, 2026 at 12:00 noon.
 
 ## Event details
 

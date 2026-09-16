@@ -6,7 +6,7 @@ export const event = {
   dateISO: "2026-09-20",
   date: "Sunday, September 20, 2026",
   shortDate: "September 20, 2026",
-  time: "11:30 AM",
+  time: "12:00 Noon",
   venue: "25812 Cove Creek",
   address: "Taylor, Michigan",
   mapsUrl: "https://www.google.com/maps/search/?api=1&query=25812%20Cove%20Creek%2C%20Taylor%2C%20Michigan",
