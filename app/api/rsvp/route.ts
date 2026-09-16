@@ -27,11 +27,17 @@ export async function POST(request: Request) {
     const value = parsed.data;
     const approvedGuest = findApprovedGuest(value.guestName);
     if (!approvedGuest) return NextResponse.json({ error: "Please select your name from the guest list." }, { status: 400 });
+    // The live database function still expects one non-empty placeholder for
+    // each unnamed household member. These labels are never requested from or
+    // displayed to guests; they preserve compatibility until the SQL update is applied.
+    const householdPlaceholders = value.attending
+      ? Array.from({ length: value.partySize - 1 }, (_, index) => `Guest ${index + 2}`)
+      : [];
     const result = await submitRsvp({
       guest_name: approvedGuest.name,
       attending: value.attending,
       party_size: value.attending ? value.partySize : 0,
-      additional_guests: [],
+      additional_guests: householdPlaceholders,
       dietary_restrictions: "",
       message: value.message,
     });

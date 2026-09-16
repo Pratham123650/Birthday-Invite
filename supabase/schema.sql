@@ -80,8 +80,6 @@ as $$
 declare
   selected_guest public.approved_guests%rowtype;
   response_existed boolean;
-  safe_additional_guests jsonb := coalesce(p_additional_guests, '[]'::jsonb);
-  safe_dietary text := trim(coalesce(p_dietary_restrictions, ''));
   safe_message text := trim(coalesce(p_message, ''));
 begin
   select * into selected_guest
@@ -94,28 +92,13 @@ begin
   if p_attending is null then
     raise exception 'attendance_required' using errcode = '22023';
   end if;
-  if jsonb_typeof(safe_additional_guests) <> 'array' then
-    raise exception 'additional_guests_must_be_an_array' using errcode = '22023';
-  end if;
-  if jsonb_array_length(safe_additional_guests) > 11 then
-    raise exception 'too_many_additional_guests' using errcode = '22023';
-  end if;
-  if exists (
-    select 1 from jsonb_array_elements_text(safe_additional_guests) as entry(value)
-    where char_length(trim(entry.value)) not between 1 and 120
-  ) then
-    raise exception 'invalid_additional_guest_name' using errcode = '22023';
-  end if;
-  if char_length(safe_dietary) > 600 or char_length(safe_message) > 1200 then
+  if char_length(safe_message) > 1200 then
     raise exception 'response_too_long' using errcode = '22023';
   end if;
-  if p_attending and (
-    p_party_size not between 1 and 12
-    or jsonb_array_length(safe_additional_guests) <> p_party_size - 1
-  ) then
+  if p_attending and p_party_size not between 1 and 12 then
     raise exception 'invalid_attending_party' using errcode = '22023';
   end if;
-  if not p_attending and (p_party_size <> 0 or jsonb_array_length(safe_additional_guests) <> 0) then
+  if not p_attending and p_party_size <> 0 then
     raise exception 'invalid_declined_party' using errcode = '22023';
   end if;
 
@@ -141,8 +124,8 @@ begin
     selected_guest.last_name,
     p_attending,
     case when p_attending then p_party_size else 0 end,
-    case when p_attending then safe_additional_guests else '[]'::jsonb end,
-    case when p_attending then safe_dietary else '' end,
+    '[]'::jsonb,
+    '',
     safe_message,
     now()
   )
